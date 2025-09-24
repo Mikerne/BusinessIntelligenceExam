@@ -20,8 +20,8 @@ Hypotheses
 - H3: Implementing predictive models can support earlier interventions and reduce future treatment costs.  
 
 Project Setup
-- Development Tools:**  
-  - GitHub repository for version control and documentation  
+- Development Tools
+  - GitHub 
   - Python (Jupyter, pandas, scikit-learn) for data analysis and modeling  
   - BI and visualization tools (Power BI / Tableau / Dash)  
 - Milestones & Deadlines:
