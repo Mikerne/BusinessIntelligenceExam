@@ -6,7 +6,7 @@
 
 Problem Formulation
 
-Project Annotation
+Project Annotation:
 This project addresses the challenge that many patients receive treatment only when their health issues are advanced. This is an important issue because early intervention can improve quality of life and reduce healthcare costs. Using Business Intelligence and Artificial Intelligence, we will analyze health and lifestyle data to develop models that can predict the risk of diseases and the need for preventive measures. The solution can help healthcare providers offer more proactive treatments and support citizens in leading healthier lives.
 
 Research Questions
