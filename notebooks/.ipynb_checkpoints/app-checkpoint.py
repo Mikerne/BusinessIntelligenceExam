@@ -221,21 +221,58 @@ with tab3:
 # Tab 4: Clustering
 # -------------------------
 with tab4:
-    st.subheader("KMeans clustering & PCA (2D)")
-    numeric = df.select_dtypes(include=[np.number])
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(numeric.drop(columns=['TenYearCHD'], errors="ignore"))
+    st.subheader("🌀 Clustering med brugerdefinerede features")
+    
+    # Vælg features til clustering
+    numeric = df.select_dtypes(include=[np.number]).drop(columns=['TenYearCHD'])
+    selected_features = st.multiselect(
+        "Vælg features til clustering (2-8)",
+        options=numeric.columns.tolist(),
+        default=['age', 'totChol'],
+    )
+    
+    if len(selected_features) < 2:
+        st.warning("Vælg mindst 2 features for at lave clustering")
+    else:
+        # Antal clusters
+        cluster_k = st.slider("Antal clusters (KMeans)", 2, 6, 2)
 
-    pca = PCA(n_components=2)
-    X_pca = pca.fit_transform(X_scaled)
+        # Skaler data
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(df[selected_features])
 
-    cluster_k = st.slider("Antal clusters (KMeans)", 2, 6, 3)
-    km = KMeans(n_clusters=cluster_k, random_state=42)
-    labels = km.fit_predict(X_scaled)
+        # KMeans clustering
+        km = KMeans(n_clusters=cluster_k, random_state=42)
+        labels = km.fit_predict(X_scaled)
 
-    fig = px.scatter(x=X_pca[:, 0], y=X_pca[:, 1], color=labels.astype(str),
-                     title="PCA 2D clustering", hover_data=[df.index])
-    st.plotly_chart(fig, use_container_width=True)
+        df_plot = df[selected_features].copy()
+        df_plot['Cluster'] = labels
+        df_plot['TenYearCHD'] = df['TenYearCHD']
+
+        # Beregn gennemsnitlig TenYearCHD pr. cluster i procent
+        cluster_chd_mean = df_plot.groupby('Cluster')['TenYearCHD'].mean().to_dict()
+        df_plot['ClusterRisk'] = df_plot['Cluster'].map(cluster_chd_mean) * 100  # procent
+
+        # Plot: brug de første to features som x og y
+        fig = px.scatter(
+            df_plot,
+            x=selected_features[0],
+            y=selected_features[1],
+            color='ClusterRisk',
+            color_continuous_scale='RdYlBu_r',
+            hover_data=selected_features + ['ClusterRisk'],
+            title=f"KMeans clustering ({cluster_k} clusters) - farve = gennemsnitlig CHD risiko (%)",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Vis cluster-risiko ved siden af
+        st.markdown("#### 📊 Cluster risiko (%)")
+        for c in range(cluster_k):
+            st.write(f"Cluster {c}: {cluster_chd_mean[c]*100:.1f}% risiko")
+
+
+
+
 
 # -------------------------
 # Tab 5: Binned analysis
