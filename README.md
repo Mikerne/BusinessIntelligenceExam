@@ -100,6 +100,5 @@ Raw data is cleaned, processed, and transformed into a structured dataset suitab
 
 ### How to Run the App
 1. Clone the repository:  
-```bash
-git clone [your-repo-link]
-cd [repo-folder]
+https://github.com/Mikerne/BusinessIntelligenceExam)
+streamlit run app.py
