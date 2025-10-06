@@ -114,17 +114,19 @@ def show_correlation_heatmap(df: pd.DataFrame):
     return fig
 
 # ----------------------------
-# 5. Grouped Histograms
+# 5. Grouped Histograms: Percent CHD for every bin
 # ----------------------------
-def show_grouped_histograms(
-    df: pd.DataFrame,
-    bins: int = 10,
-    layout: str = "separate",
-    category_col: str = "type",
-    bell_curve: bool = True,
-    max_cols: int = 3,
-    alpha: float = 0.7,
-):
+def show_grouped_histograms(df: pd.DataFrame, 
+                            bins: int = 10, 
+                            layout: str = "separate",
+                            category_col: str = "TenYearCHD",
+                            max_cols: int = 3,
+                            alpha: float = 0.7):
+    """
+    Shows the percentage of people with CHD=1 per bin by continuos variables.
+    x axis is the binned column
+    y axix is percentage with CHD=1
+    """
     if category_col not in df.columns:
         raise ValueError(f"Category column '{category_col}' not found in DataFrame.")
 
@@ -133,63 +135,22 @@ def show_grouped_histograms(
         print("No numeric columns to plot.")
         return
 
-    cats = list(df[category_col].dropna().unique())
-    if len(cats) == 0:
-        print(f"No non-null categories found in '{category_col}'.")
-        return
-
-    default_colors = plt.rcParams.get("axes.prop_cycle", None)
-    palette = (default_colors.by_key()["color"] if default_colors else ["C0", "C1", "C2", "C3"])
-    color_map = {cat: palette[i % len(palette)] for i, cat in enumerate(cats)}
-
     def _plot_column(ax, col: str):
-        data_col = df[col].dropna().values
-        if data_col.size == 0:
-            ax.set_visible(False)
-            return
+        # Lav bins
+        bin_labels = pd.cut(df[col], bins=bins)
+        # Calculate percentage for every bin
+        pct_chd = df.groupby(bin_labels)[category_col].mean() * 100
+        
+        # Plot
+        ax.bar(pct_chd.index.astype(str), pct_chd.values, alpha=alpha, color='salmon', edgecolor='black')
+        ax.set_title(f'Procent med CHD per bin af {col}')
+        ax.set_xlabel(f'{col} bins')
+        ax.set_ylabel('Percentage with CHD (%)')
+        ax.set_ylim(0, 100)
+        ax.grid(axis='y', alpha=0.25)
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
 
-        bin_edges = np.histogram_bin_edges(data_col, bins=bins)
-        k = max(1, len(cats))
-        bin_widths = np.diff(bin_edges)
-        width_each = bin_widths / k
-
-        handles = []
-        labels = []
-
-        for j, cat in enumerate(cats):
-            vals = df.loc[df[category_col] == cat, col].dropna().values
-            if vals.size == 0:
-                continue
-            counts, _ = np.histogram(vals, bins=bin_edges, density=True)
-            lefts = bin_edges[:-1] + j * width_each
-            bar = ax.bar(
-                lefts,
-                counts,
-                width=width_each,
-                align="edge",
-                alpha=alpha,
-                edgecolor="black",
-                color=color_map[cat],
-                label=str(cat),
-            )
-            handles.append(bar)
-            labels.append(str(cat))
-
-            if bell_curve:
-                mu = np.mean(vals)
-                std = np.std(vals, ddof=1)
-                if std > 0 and np.isfinite(std):
-                    x = np.linspace(bin_edges[0], bin_edges[-1], 200)
-                    pdf = (1.0 / (std * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / std) ** 2)
-                    ax.plot(x, pdf, color=color_map[cat], linewidth=2, alpha=0.9)
-
-        ax.set_title(f'Histogram of {col} by {category_col}')
-        ax.set_xlabel(col)
-        ax.set_ylabel('Density')
-        ax.grid(True, alpha=0.25)
-        if handles:
-            ax.legend([h for h in handles], labels, title=category_col)
-
+    # Layout
     if layout == "grid":
         n = len(numeric_cols)
         cols = max(1, min(max_cols, n))
@@ -208,6 +169,10 @@ def show_grouped_histograms(
             _plot_column(ax, col)
             plt.tight_layout()
             plt.show()
+
+
+
+
 
 # ----------------------------
 # 6. Binned Data
